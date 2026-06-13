@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RentVerify – UTM Student Housing</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green:      #0B9E6B;
+    --green-dk:   #077A52;
+    --green-lt:   #E0F7EE;
+    --gold:       #F5A800;
+    --gold-lt:    #FFF8E1;
+    --white:      #FFFFFF;
+    --bg:         #F4F3EF;
+    --card:       #FFFFFF;
+    --text-1:     #1A1A18;
+    --text-2:     #5C5C58;
+    --text-3:     #ACACAA;
+    --border:     #E6E5E0;
+    --danger:     #D94040;
+    --star:       #F5A800;
+    --screen-w:   390px;
+    --screen-h:   844px;
+    --radius-card: 20px;
+    --radius-pill: 100px;
+  }
+
+  html, body {
+    height: 100%;
+    background: #111110;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── Outer shell ── */
+  .device-shell {
+    width: var(--screen-w);
+    height: var(--screen-h);
+    background: var(--bg);
+    border-radius: 44px;
+    overflow: hidden;
+    position: relative;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.08),
+      0 40px 120px rgba(0,0,0,0.8),
+      inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+
+  /* ── Screen system ── */
+  .screens-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    overflow-y: auto;
+    overflow-x: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(40px);
+    transition: opacity 0.32s cubic-bezier(0.4,0,0.2,1),
+                transform 0.32s cubic-bezier(0.4,0,0.2,1);
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(0);
+  }
+  .screen.exit-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    pointer-events: none;
+  }
+
+  /* ── Status bar ── */
+  .status-bar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    font-size: 12px;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: inherit;
+  }
+  .status-bar.light { background: var(--white); color: var(--text-1); }
+  .status-bar.green-bar { background: var(--green-dk); color: white; }
+  .status-icons { display: flex; gap: 5px; align-items: center; }
+  .status-icons span { font-size: 11px; }
+
+  /* ── Nav bar ── */
+  .nav-bar {
+    position: sticky;
+    bottom: 0;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    display: flex;
+    height: 64px;
+    padding: 0 8px 8px;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background 0.15s;
+  }
+  .nav-item:hover { background: var(--bg); }
+  .nav-icon { font-size: 20px; line-height: 1; }
+  .nav-label { font-size: 10px; font-weight: 500; color: var(--text-3); }
+  .nav-item.active .nav-label { color: var(--green); }
+
+  /* ── Back header ── */
+  .top-bar {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 44px;
+    z-index: 9;
+  }
+  .back-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .back-btn:active { transform: scale(0.93); }
+  .top-bar-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; color: var(--text-1); }
+  .top-bar-sub { font-size: 12px; color: var(--text-3); margin-left: auto; }
+
+  /* ── Common components ── */
+  .section-pad { padding: 0 20px; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+    transition: transform 0.12s, opacity 0.12s;
+  }
+  .pill:active { transform: scale(0.96); }
+  .pill-green { background: var(--green); color: white; }
+  .pill-outline { background: var(--white); color: var(--text-2); border: 1px solid var(--border); }
+  .pill-gold { background: var(--gold-lt); color: #7A5000; }
+  .pill-green-lt { background: var(--green-lt); color: var(--green-dk); }
+
+  .verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--gold);
+    color: #3D2800;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .unverified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #F0EFEB;
+    color: var(--text-3);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+  }
+  .card-shadow { box-shadow: 0 2px 16px rgba(0,0,0,0.07); }
+  .card-gold-border { outline: 1.5px solid var(--gold); }
+
+  .btn-primary {
+    width: 100%;
+    height: 52px;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+  .btn-primary:hover { background: var(--green-dk); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  /* ── Rating widget ── */
+  .rating-widget {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 0 20px 16px;
+  }
+  .rating-widget-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .rating-q {
+    font-size: 13px;
+    color: var(--text-1);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .stars-row { display: flex; gap: 6px; }
+  .star-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    color: var(--text-3);
+  }
+  .star-btn:hover { border-color: var(--gold); transform: scale(1.1); }
+  .star-btn.selected { background: var(--gold-lt); border-color: var(--gold); color: var(--gold); }
+  .rating-saved { font-size: 12px; color: var(--green); font-weight: 600; margin-top: 8px; display: none; }
+
+  /* experiment note */
+  .exp-note {
+    background: #FFF8DC;
+    border: 1px dashed #D4A017;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin: 0 20px 16px;
+    font-size: 11px;
+    color: #7A5500;
+    line-height: 1.5;
+  }
+  .exp-note strong { display: block; margin-bottom: 2px; font-size: 11px; }
+
+  /* ════════════════════════════════
+     SCREEN 1 — HOME
+  ════════════════════════════════ */
+  .s1-hero {
+    background: linear-gradient(160deg, var(--green) 0%, var(--green-dk) 100%);
+    padding: 20px 20px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .s1-hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+  }
+  .s1-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+  .s1-tagline { font-size: 13px; color: rgba(255,255,255,0.75); margin-bottom: 18px; }
+  .search-box {
+    background: white;
+    border-radius: 14px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    font-size: 14px;
+    color: var(--text-3);
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    transition: box-shadow 0.15s;
+  }
+  .search-box:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.16); }
+
+  .filter-pills { display: flex; gap: 8px; padding: 14px 20px 0; overflow-x: auto; scrollbar-width: none; }
+  .filter-pills::-webkit-scrollbar { display: none; }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-1);
+    padding: 18px 20px 10px;
+    letter-spacing: -0.01em;
+  }
+
+  .listing-card {
+    margin: 0 20px 14px;
+    border-radius: var(--radius-card);
+    background: var(--card);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.18s, box-shadow 0.18s;
+  }
+  .listing-card:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(0,0,0,0.11); }
+  .listing-card:active { transform: scale(0.98); }
+
+  .listing-img {
+    height: 140px;
+    background: linear-gradient(135deg, #C8E6DA 0%, #A8D8C4 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    color: rgba(255,255,255,0.6);
+  }
+  .listing-img .badge-pos { position: absolute; top: 10px; left: 10px; }
+  .listing-img .price-tag {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+  }
+
+  .listing-body { padding: 14px 16px; }
+  .listing-title { font-size: 14px; font-weight: 600; color: var(--text-1); margin-bottom: 4px; }
+  .listing-loc { font-size: 12px; color: var(--text-2); margin-bottom: 8px; }
+  .listing-foot { display: flex; justify-content: space-between; align-items: center; }
+  .listing-price { font-size: 15px; font-weight: 700; color: var(--green); }
+  .listing-stars { font-size: 12px; color: var(--text-2); }
+  .star-gold { color: var(--star); }
+
+  /* ════════════════════════════════
+     SCREEN 2 — FILTERS
+  ════════════════════════════════ */
+  .filter-group { padding: 20px; border-bottom: 1px solid var(--border); }
+  .filter-group-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-1);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .range-track {
+    position: relative;
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    margin: 8px 0 20px;
+  }
+  .range-fill {
+    position: absolute;
+    left: 0; top: 0;
+    width: 60%;
+    height: 100%;
+    background: var(--green);
+    border-radius: 4px;
+  }
+  .range-thumb {
+    position: absolute;
+    top: -9px;
+    left: 60%;
+    transform: translateX(-50%);
+    width: 22px; height: 22px;
+    background: var(--green);
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(11,158,107,0.4);
+  }
+  .range-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-3); }
+
+  .radio-list { display: flex; flex-direction: column; gap: 2px; }
+  .radio-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-size: 14px;
+    color: var(--text-1);
+  }
+  .radio-item:hover { background: var(--bg); }
+  .radio-item.selected { background: var(--green-lt); color: var(--green-dk); font-weight: 600; }
+  .radio-dot {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .radio-item.selected .radio-dot {
+    border-color: var(--green);
+    background: var(--green);
+  }
+  .radio-dot::after {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: white;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .radio-item.selected .radio-dot::after { opacity: 1; }
+
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .toggle-info .toggle-label { font-size: 14px; font-weight: 600; color: var(--text-1); }
+  .toggle-info .toggle-sub { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .toggle-track {
+    width: 50px; height: 28px;
+    border-radius: 14px;
+    background: var(--green);
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .toggle-thumb {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 20px; height: 20px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    transition: right 0.2s;
+  }
+
+  /* ════════════════════════════════
+     SCREEN 3 — LISTINGS
+  ════════════════════════════════ */
+  .active-filters { display: flex; gap: 8px; padding: 12px 20px; overflow-x: auto; scrollbar-width: none; }
+  .active-filters::-webkit-scrollbar { display: none; }
+
+  .results-count { padding: 0 20px 10px; font-size: 12px; color: var(--text-3); }
+
+  .listing-card-full {
+    margin: 0 20px 14px;
+    border-radius: var(--radius-card);
+    background: var(--card);
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.18s, box-shadow 0.18s;
+  }
+  .listing-card-full:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+  .listing-card-full:active { transform: scale(0.98); }
+  .listing-card-full.verified { box-shadow: 0 2px 0 var(--gold), 0 4px 20px rgba(0,0,0,0.07); outline: 1.5px solid var(--gold); }
+  .listing-card-full.unverified { box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+
+  .listing-img-full {
+    height: 150px;
+    background: linear-gradient(135deg, #C8E6DA 0%, #9FD4BF 100%);
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+  }
+  .listing-img-full.grey-img {
+    background: linear-gradient(135deg, #E8E8E5 0%, #D8D8D4 100%);
+  }
+  .listing-img-full .img-badge { position: absolute; top: 12px; left: 12px; }
+  .listing-body-full { padding: 14px 16px 16px; }
+  .listing-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+  .listing-title-full { font-size: 15px; font-weight: 600; color: var(--text-1); }
+  .listing-price-full { font-size: 15px; font-weight: 700; color: var(--green); }
+  .listing-loc-full { font-size: 12px; color: var(--text-2); margin-bottom: 8px; }
+  .listing-meta { display: flex; justify-content: space-between; align-items: center; }
+  .rating-text { font-size: 12px; color: var(--text-2); }
+
+  /* ════════════════════════════════
+     SCREEN 4 — AGENT PROFILE
+  ════════════════════════════════ */
+  .agent-hero {
+    background: var(--green-lt);
+    padding: 28px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .agent-avatar {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 4px 16px rgba(11,158,107,0.3);
+  }
+  .agent-name { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: var(--text-1); }
+  .agent-sub { font-size: 13px; color: var(--text-2); text-align: center; }
+
+  .agent-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .agent-stat {
+    padding: 16px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    border-right: 1px solid var(--border);
+  }
+  .agent-stat:last-child { border-right: none; }
+  .stat-val { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text-1); }
+  .stat-lbl { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+  .info-section { padding: 20px; border-bottom: 1px solid var(--border); }
+  .info-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); margin-bottom: 10px; }
+  .info-text { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+  .license-card {
+    background: var(--green-lt);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-top: 12px;
+  }
+  .license-main { font-size: 13px; font-weight: 600; color: var(--green-dk); margin-bottom: 3px; }
+  .license-sub { font-size: 12px; color: var(--text-2); }
+
+  .listing-mini {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .listing-mini:hover { background: var(--green-lt); }
+  .listing-mini-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+  }
+  .listing-mini-title { font-size: 13px; font-weight: 600; color: var(--text-1); }
+  .listing-mini-sub { font-size: 12px; color: var(--text-2); }
+
+  /* ════════════════════════════════
+     SCREEN 5 — CONTACT
+  ════════════════════════════════ */
+  .contact-agent-bar {
+    background: var(--green-lt);
+    margin: 16px 20px;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .contact-avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+  .contact-agent-name { font-size: 14px; font-weight: 600; color: var(--green-dk); }
+
+  .form-group { padding: 0 20px 16px; }
+  .form-label { font-size: 13px; font-weight: 600; color: var(--text-1); margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%;
+    height: 48px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 0 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text-1);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--green); background: white; }
+  textarea.form-input {
+    height: 88px;
+    padding: 12px 16px;
+    resize: none;
+    line-height: 1.5;
+  }
+
+  .privacy-note {
+    padding: 0 20px 16px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-2);
+  }
+  .privacy-icon { font-size: 14px; }
+
+  .form-footer { padding: 0 20px 20px; }
+  .reply-note { text-align: center; font-size: 12px; color: var(--text-3); margin-top: 10px; }
+
+  /* success toast */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text-1);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 100;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Experiment overlay rating (Screen 3 key) ── */
+  .screen-rating-note {
+    background: linear-gradient(135deg, #FFF8DC, #FFF3C4);
+    border: 1.5px dashed #D4A017;
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin: 0 20px 14px;
+  }
+  .srn-title { font-size: 11px; font-weight: 700; color: #7A5500; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .srn-q { font-size: 13px; color: #5A3D00; margin-bottom: 10px; line-height: 1.5; }
+  .srn-stars { display: flex; gap: 6px; }
+  .srn-star {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1.5px solid #D4A017;
+    background: white;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+    color: #D4A017;
+    font-weight: 700;
+    font-size: 13px;
+    font-family: 'Syne', sans-serif;
+  }
+  .srn-star:hover { background: var(--gold-lt); transform: scale(1.08); }
+  .srn-star.lit { background: var(--gold); color: #3D2800; border-color: var(--gold); }
+  .srn-saved { font-size: 12px; color: var(--green); font-weight: 600; margin-top: 8px; display: none; }
+</style>
+</head>
+<body>
+
+<div class="device-shell">
+  <div class="screens-wrapper">
+
+    <!-- ══════════════════════════════
+         SCREEN 1 — HOME
+    ══════════════════════════════ -->
+    <div class="screen active" id="screen-1">
+      <!-- status -->
+      <div class="status-bar green-bar">
+        <span>9:41</span>
+        <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+      </div>
+      <!-- hero -->
+      <div class="s1-hero">
+        <div class="s1-logo">RentVerify</div>
+        <div class="s1-tagline">Find your room near UTM — verified &amp; trusted</div>
+        <div class="search-box" onclick="goto(2)">
+          <span>🔍</span>
+          <span>Search location near UTM...</span>
+        </div>
+      </div>
+      <!-- filter pills -->
+      <div class="filter-pills">
+        <button class="pill pill-green" onclick="goto(2)">All</button>
+        <button class="pill pill-outline" onclick="goto(2)">Studio</button>
+        <button class="pill pill-outline" onclick="goto(2)">Shared room</button>
+        <button class="pill pill-outline" onclick="goto(2)">Near campus</button>
+        <button class="pill pill-outline" onclick="goto(2)">Under RM500</button>
+      </div>
+      <!-- rating note for S1 -->
+      <div class="screen-rating-note" style="margin-top:16px;">
+        <div class="srn-title">📋 Screen 1 Rating — Experiment</div>
+        <div class="srn-q">"I immediately understand what this app is for."</div>
+        <div class="srn-stars" id="s1-stars"></div>
+        <div class="srn-saved" id="s1-saved">✓ Rating saved</div>
+      </div>
+      <!-- listings -->
+      <div class="section-title">Featured near UTM</div>
+      <div class="listing-card" onclick="goto(4)">
+        <div class="listing-img">
+          🏠
+          <div class="badge-pos"><span class="verified-badge">✓ Verified Agent</span></div>
+          <div class="price-tag">RM 520/mo</div>
+        </div>
+        <div class="listing-body">
+          <div class="listing-title">Cozy studio, 5 min to UTM main gate</div>
+          <div class="listing-loc">📍 Nusajaya, Skudai</div>
+          <div class="listing-foot">
+            <div class="listing-price">RM 520 / month</div>
+            <div class="listing-stars"><span class="star-gold">★★★★★</span> 4.9</div>
+          </div>
+        </div>
+      </div>
+      <div class="listing-card" onclick="goto(3)">
+        <div class="listing-img" style="background: linear-gradient(135deg,#D4EAE0,#B8D8CC)">
+          🏘
+          <div class="badge-pos"><span class="verified-badge">✓ Verified Agent</span></div>
+          <div class="price-tag">RM 380/mo</div>
+        </div>
+        <div class="listing-body">
+          <div class="listing-title">Single room with AC, walking to UTM</div>
+          <div class="listing-loc">📍 Gelang Patah, JB</div>
+          <div class="listing-foot">
+            <div class="listing-price">RM 380 / month</div>
+            <div class="listing-stars"><span class="star-gold">★★★★</span>☆ 4.2</div>
+          </div>
+        </div>
+      </div>
+      <!-- nav -->
+      <div class="nav-bar">
+        <div class="nav-item active"><div class="nav-icon">🏠</div><div class="nav-label">Home</div></div>
+        <div class="nav-item" onclick="goto(3)"><div class="nav-icon">🔍</div><div class="nav-label">Search</div></div>
+        <div class="nav-item"><div class="nav-icon">❤️</div><div class="nav-label">Saved</div></div>
+        <div class="nav-item"><div class="nav-icon">👤</div><div class="nav-label">Profile</div></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         SCREEN 2 — FILTERS
+    ══════════════════════════════ -->
+    <div class="screen" id="screen-2">
+      <div class="status-bar light"><span>9:41</span><div class="status-icons"><span>●●●</span><span>🔋</span></div></div>
+      <div class="top-bar">
+        <button class="back-btn" onclick="goback()">←</button>
+        <span class="top-bar-title">Filter Search</span>
+      </div>
+      <!-- rating S2 -->
+      <div class="screen-rating-note" style="margin-top:16px;">
+        <div class="srn-title">📋 Screen 2 Rating — Experiment</div>
+        <div class="srn-q">"The filter options match what I actually care about when searching for a room."</div>
+        <div class="srn-stars" id="s2-stars"></div>
+        <div class="srn-saved" id="s2-saved">✓ Rating saved</div>
+      </div>
+      <!-- price -->
+      <div class="filter-group">
+        <div class="filter-group-title">Price range (RM / month)</div>
+        <div class="range-track">
+          <div class="range-fill"></div>
+          <div class="range-thumb"></div>
+        </div>
+        <div class="range-labels"><span>RM 300</span><span style="color:var(--green);font-weight:600">RM 600 selected</span><span>RM 1,200</span></div>
+      </div>
+      <!-- room type -->
+      <div class="filter-group">
+        <div class="filter-group-title">Room type</div>
+        <div class="radio-list" id="radio-list">
+          <div class="radio-item" onclick="selectRadio(this)"><div class="radio-dot"></div>Any</div>
+          <div class="radio-item selected" onclick="selectRadio(this)"><div class="radio-dot"></div>Single room</div>
+          <div class="radio-item" onclick="selectRadio(this)"><div class="radio-dot"></div>Master room</div>
+          <div class="radio-item" onclick="selectRadio(this)"><div class="radio-dot"></div>Studio</div>
+          <div class="radio-item" onclick="selectRadio(this)"><div class="radio-dot"></div>Whole unit</div>
+        </div>
+      </div>
+      <!-- verified toggle -->
+      <div class="filter-group">
+        <div class="filter-group-title">Trust &amp; Safety</div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label">Show verified agents only</div>
+            <div class="toggle-sub">Only listings with licensed, verified agents</div>
+          </div>
+          <div class="toggle-track" id="toggle-verified">
+            <div class="toggle-thumb"></div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:20px;">
+        <button class="btn-primary" onclick="goto(3)">See results →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         SCREEN 3 — LISTINGS ⭐ KEY
+    ══════════════════════════════ -->
+    <div class="screen" id="screen-3">
+      <div class="status-bar light"><span>9:41</span><div class="status-icons"><span>●●●</span><span>🔋</span></div></div>
+      <div class="top-bar">
+        <button class="back-btn" onclick="goback()">←</button>
+        <span class="top-bar-title">Rooms near UTM</span>
+        <span class="top-bar-sub">12 results</span>
+      </div>
+      <!-- active filter pills -->
+      <div class="active-filters">
+        <span class="pill pill-gold">✓ Verified</span>
+        <span class="pill pill-green-lt">RM 300–600</span>
+        <span class="pill pill-outline">Single room</span>
+      </div>
+      <!-- ⭐ KEY rating widget -->
+      <div class="screen-rating-note">
+        <div class="srn-title">⭐ Screen 3 — Key Experiment Rating</div>
+        <div class="srn-q">"I would trust a listing from a 'Verified Agent' more than an unverified one."</div>
+        <div class="srn-stars" id="s3-stars"></div>
+        <div class="srn-saved" id="s3-saved">✓ Rating saved — thank you!</div>
+      </div>
+      <!-- Verified listing -->
+      <div class="listing-card-full verified" onclick="goto(4)">
+        <div class="listing-img-full">
+          🏠
+          <div class="img-badge"><span class="verified-badge">✓ Verified Agent</span></div>
+        </div>
+        <div class="listing-body-full">
+          <div class="listing-row">
+            <div class="listing-title-full">Cozy single room, 5 min to UTM</div>
+            <div class="listing-price-full">RM 520</div>
+          </div>
+          <div class="listing-loc-full">📍 Nusajaya, Skudai · per month</div>
+          <div class="listing-meta">
+            <div class="rating-text"><span class="star-gold">★★★★★</span> 4.9 (23 reviews)</div>
+            <span class="pill pill-green-lt" style="font-size:11px;padding:4px 10px;">See agent →</span>
+          </div>
+        </div>
+      </div>
+      <!-- Unverified listing -->
+      <div class="listing-card-full unverified" style="cursor:default;">
+        <div class="listing-img-full grey-img">
+          🏘
+          <div class="img-badge"><span class="unverified-badge">⚠ Unverified</span></div>
+        </div>
+        <div class="listing-body-full">
+          <div class="listing-row">
+            <div class="listing-title-full" style="color:var(--text-2)">Master room near UTM hostel</div>
+            <div class="listing-price-full" style="color:var(--text-3)">RM 480</div>
+          </div>
+          <div class="listing-loc-full">📍 Gelang Patah · per month</div>
+          <div class="listing-meta">
+            <div class="rating-text"><span class="star-gold">★★★</span>☆☆ 3.1 (5 reviews)</div>
+            <span style="font-size:11px;color:var(--text-3)">No verification</span>
+          </div>
+        </div>
+      </div>
+      <div style="height:16px;"></div>
+    </div>
+
+    <!-- ══════════════════════════════
+         SCREEN 4 — AGENT PROFILE
+    ══════════════════════════════ -->
+    <div class="screen" id="screen-4">
+      <div class="status-bar light"><span>9:41</span><div class="status-icons"><span>●●●</span><span>🔋</span></div></div>
+      <div class="top-bar">
+        <button class="back-btn" onclick="goback()">←</button>
+        <span class="top-bar-title">Agent Profile</span>
+      </div>
+      <!-- rating S4 -->
+      <div class="screen-rating-note" style="margin-top:14px;">
+        <div class="srn-title">📋 Screen 4 Rating — Experiment</div>
+        <div class="srn-q">"This profile gives me enough info to decide whether to contact this agent."</div>
+        <div class="srn-stars" id="s4-stars"></div>
+        <div class="srn-saved" id="s4-saved">✓ Rating saved</div>
+      </div>
+      <!-- hero -->
+      <div class="agent-hero">
+        <div class="agent-avatar">AH</div>
+        <span class="verified-badge" style="font-size:11px;">✓ Verified Agent</span>
+        <div class="agent-name">Ahmad Hafiz</div>
+        <div class="agent-sub">Licensed property agent · 6 years experience</div>
+      </div>
+      <!-- stats -->
+      <div class="agent-stats">
+        <div class="agent-stat"><div class="stat-val">47</div><div class="stat-lbl">Listings</div></div>
+        <div class="agent-stat"><div class="stat-val">4.8★</div><div class="stat-lbl">Rating</div></div>
+        <div class="agent-stat"><div class="stat-val">98%</div><div class="stat-lbl">Response</div></div>
+      </div>
+      <!-- about -->
+      <div class="info-section">
+        <div class="info-section-title">About</div>
+        <div class="info-text">Specialises in student housing near UTM Skudai campus. All properties personally inspected and documented before listing. Available 7 days a week.</div>
+        <div class="license-card">
+          <div class="license-main">🏛 License verified by LPPEH Malaysia</div>
+          <div class="license-sub">Verified 12 Jan 2025 · Valid until Dec 2026 · No. E(3)0734</div>
+        </div>
+      </div>
+      <!-- listings -->
+      <div class="info-section">
+        <div class="info-section-title">Active Listings (3)</div>
+        <div class="listing-mini" onclick="goto(5)">
+          <div class="listing-mini-dot"></div>
+          <div><div class="listing-mini-title">Studio · RM 520/mo · Nusajaya</div><div class="listing-mini-sub">Verified · Available now</div></div>
+        </div>
+        <div class="listing-mini">
+          <div class="listing-mini-dot"></div>
+          <div><div class="listing-mini-title">Single room · RM 420/mo · Pulai</div><div class="listing-mini-sub">Verified · Available now</div></div>
+        </div>
+        <div class="listing-mini">
+          <div class="listing-mini-dot"></div>
+          <div><div class="listing-mini-title">Master room · RM 680/mo · Nusajaya</div><div class="listing-mini-sub">Verified · 1 slot left</div></div>
+        </div>
+      </div>
+      <div style="padding:20px;">
+        <button class="btn-primary" onclick="goto(5)">Contact this agent →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         SCREEN 5 — CONTACT FORM
+    ══════════════════════════════ -->
+    <div class="screen" id="screen-5">
+      <div class="status-bar light"><span>9:41</span><div class="status-icons"><span>●●●</span><span>🔋</span></div></div>
+      <div class="top-bar">
+        <button class="back-btn" onclick="goback()">←</button>
+        <span class="top-bar-title">Contact Agent</span>
+      </div>
+      <!-- agent bar -->
+      <div class="contact-agent-bar">
+        <div class="contact-avatar">AH</div>
+        <div>
+          <div class="contact-agent-name">Ahmad Hafiz</div>
+          <span class="verified-badge" style="font-size:10px;margin-top:4px;">✓ Verified Agent</span>
+        </div>
+      </div>
+      <!-- rating S5 -->
+      <div class="screen-rating-note" style="margin:0 20px 16px;">
+        <div class="srn-title">📋 Screen 5 Rating — Experiment</div>
+        <div class="srn-q">"I feel comfortable submitting my details through this form."</div>
+        <div class="srn-stars" id="s5-stars"></div>
+        <div class="srn-saved" id="s5-saved">✓ Rating saved</div>
+      </div>
+      <!-- form -->
+      <div class="form-group">
+        <label class="form-label">Your full name</label>
+        <input class="form-input" type="text" placeholder="e.g. Muhammad Imam">
+      </div>
+      <div class="form-group">
+        <label class="form-label">UTM student email</label>
+        <input class="form-input" type="email" placeholder="e.g. imam@graduate.utm.my">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone number (WhatsApp)</label>
+        <input class="form-input" type="tel" placeholder="e.g. 016-XXXXXXX">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
+        <textarea class="form-input" placeholder="Hi, I'm interested in your listing near UTM..."></textarea>
+      </div>
+      <div class="privacy-note">
+        <span class="privacy-icon">🔒</span>
+        <span>Your info is shared only with this verified agent.</span>
+      </div>
+      <div class="form-footer">
+        <button class="btn-primary" onclick="sendMsg()">Send message</button>
+        <div class="reply-note">You'll get a WhatsApp reply within 24 hours</div>
+      </div>
+    </div>
+
+  </div><!-- screens-wrapper -->
+
+  <div class="toast" id="toast"></div>
+</div><!-- device-shell -->
+
+<script>
+  // ── Screen navigation ──────────────────────────────────────
+  let currentScreen = 1;
+  const history = [1];
+
+  function goto(n) {
+    const cur = document.getElementById('screen-' + currentScreen);
+    const next = document.getElementById('screen-' + n);
+    if (!next || n === currentScreen) return;
+    cur.classList.remove('active');
+    cur.classList.add('exit-left');
+    setTimeout(() => { cur.classList.remove('exit-left'); cur.scrollTop = 0; }, 340);
+    next.classList.add('active');
+    history.push(n);
+    currentScreen = n;
+  }
+
+  function goback() {
+    if (history.length <= 1) return;
+    history.pop();
+    const prev = history[history.length - 1];
+    const cur = document.getElementById('screen-' + currentScreen);
+    const prevEl = document.getElementById('screen-' + prev);
+    cur.classList.remove('active');
+    setTimeout(() => { cur.scrollTop = 0; }, 340);
+    prevEl.classList.add('active');
+    currentScreen = prev;
+  }
+
+  // ── Radio select ───────────────────────────────────────────
+  function selectRadio(el) {
+    document.querySelectorAll('.radio-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  // ── Rating stars (per screen) ──────────────────────────────
+  function buildStars(containerId, savedId) {
+    const container = document.getElementById(containerId);
+    const saved = document.getElementById(savedId);
+    if (!container) return;
+    container.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'srn-star';
+      btn.textContent = i;
+      btn.dataset.val = i;
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('.srn-star').forEach((s, idx) => {
+          s.classList.toggle('lit', idx < i);
+        });
+        if (saved) {
+          saved.style.display = 'block';
+          setTimeout(() => { saved.style.display = 'none'; }, 2000);
+        }
+      });
+      container.appendChild(btn);
+    }
+  }
+
+  buildStars('s1-stars', 's1-saved');
+  buildStars('s2-stars', 's2-saved');
+  buildStars('s3-stars', 's3-saved');
+  buildStars('s4-stars', 's4-saved');
+  buildStars('s5-stars', 's5-saved');
+
+  // ── Toast ──────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── Send message ───────────────────────────────────────────
+  function sendMsg() {
+    showToast('✅ Message sent! Ahmad will reply on WhatsApp.');
+    setTimeout(() => goto(1), 2000);
+  }
+</script>
+</body>
+</html>
